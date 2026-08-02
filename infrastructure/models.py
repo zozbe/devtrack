@@ -1,17 +1,36 @@
-from sqlalchemy import Column, String, Text, Integer, DateTime
+from sqlalchemy import Column, String, Text, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
 from infrastructure.database import Base
-from datetime import datetime, timezone
 
+# YENİ EKLENEN KULLANICI TABLOSU
+class UserDBModel(Base):
+    __tablename__ = "users"
+
+    id = Column(String(36), primary_key=True, index=True)
+    username = Column(String(50), unique=True, nullable=False)
+    email = Column(String(100), unique=True, nullable=False)
+    full_name = Column(String(100), nullable=True)
+    created_at = Column(DateTime)
+
+    # Kullanıcının üstlendiği görevlere tek tıkla ulaşmak için ilişki (Relationship)
+    issues = relationship("IssueDBModel", back_populates="assignee")
+
+
+# GÖREV TABLOSU
 class IssueDBModel(Base):
-    __tablename__ = "issues" # MySQL'de oluşacak tablonun adı
+    __tablename__ = "issues"
 
-    # Tablodaki sütunları (kolonları) tanımlıyoruz
     id = Column(String(36), primary_key=True, index=True)
     title = Column(String(100), nullable=False)
-    description = Column(Text, nullable=True)
-    status = Column(String(20), nullable=False, default="TODO")
-    assignee_id = Column(Integer, nullable=True)
+    description = Column(Text)
+    status = Column(String(20), nullable=False)
     
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
-    due_date = Column(DateTime, nullable=True)
+    #  düz bir sayı değil, users tablosundaki id'ye (Yabancı Anahtar) bağlı!
+    assignee_id = Column(String(36), ForeignKey("users.id"), nullable=True)
+    
+    created_at = Column(DateTime)
+    updated_at = Column(DateTime)
+    due_date = Column(DateTime)
+
+    # SQLAlchemy'nin bu görevi kimin aldığını (User objesi olarak) otomatik getirmesi için ilişki
+    assignee = relationship("UserDBModel", back_populates="issues")

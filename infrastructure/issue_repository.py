@@ -1,6 +1,8 @@
 from domain.issue import Issue, IssueStatus
 from infrastructure.database import SessionLocal
 from infrastructure.models import IssueDBModel
+from sqlalchemy.orm import joinedload
+from domain.user import User
 
 class IssueRepository:
     def __init__(self):
@@ -108,3 +110,35 @@ class MySQLIssueRepository:
                 db.commit() # Veriyi sil (DELETE)
                 return True
         return False
+    def get_all(self) -> list[Issue]:
+        with SessionLocal() as db:
+            # joinedload ile SQLAlchemy'ye "görevleri çekerken, sahiplerini de getir" diyoruz
+            db_items = db.query(IssueDBModel).options(joinedload(IssueDBModel.assignee)).all()
+            
+            issues = []
+            for item in db_items:
+                issue = Issue(
+                    title=item.title,
+                    description=item.description,
+                    assignee_id=item.assignee_id
+                )
+                issue.id = item.id
+                issue.status = item.status
+                issue.created_at = item.created_at
+                issue.updated_at = item.updated_at
+                issue.due_date = item.due_date
+                
+                # EĞER GÖREV BİRİNE ATANMIŞSA, KULLANICI DETAYLARINI DA EKLE
+                if item.assignee:
+                    user = User(
+                        username=item.assignee.username,
+                        email=item.assignee.email,
+                        full_name=item.assignee.full_name
+                    )
+                    user.id = item.assignee.id
+                    user.created_at = item.assignee.created_at
+                    issue.assignee = user # Issue nesnesinin içine User nesnesini yerleştirdik
+                    
+                issues.append(issue)
+                
+            return issues

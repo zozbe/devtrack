@@ -1,12 +1,17 @@
 from infrastructure.database import engine, Base
 from infrastructure import models
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from api.routes import router as issues_router
 from application.user_service import UserService
-from api.schemas import UserCreateRequest, UserResponse
 
-# Kullanıcı şefimizi başlatalım
+# 1. EKSİK İÇE AKTARMALAR (IMPORTS) EKLENDİ
+from application.issue_service import IssueService 
+from api.schemas import UserCreateRequest, UserResponse, IssueResponse, IssueUpdateRequest
+
+# Şeflerimizi başlatalım
 user_service = UserService()
+# 2. GÖREV ŞEFİMİZ (ISSUE SERVICE) EKLENDİ
+issue_service = IssueService() 
 
 # Eski yapıyı komple sil
 #Base.metadata.drop_all(bind=engine)
@@ -19,7 +24,9 @@ app = FastAPI(
     description="Geliştirici Görev ve Hata Takip Sistemi",
     version="1.0.0"
 )
+
 app.include_router(issues_router)
+
 # /health endpoint'i: Sistemin ayakta olup olmadığını kontrol eder.
 @app.get("/health")
 async def health_check():
@@ -36,3 +43,19 @@ def create_user(request: UserCreateRequest):
 @app.get("/users/", response_model=list[UserResponse], tags=["Kullanıcılar (Users)"])
 def get_all_users():
     return user_service.get_all_users()
+
+@app.put("/issues/{issue_id}", response_model=IssueResponse, tags=["Görevler (Issues)"])
+def update_issue(issue_id: str, request: IssueUpdateRequest):
+    try:
+        return issue_service.update_issue(issue_id, request)
+    except ValueError as e:
+        # Şefimiz "Bulunamadı" diye hata fırlatırsa, Garson kullanıcıya 404 döner.
+        raise HTTPException(status_code=404, detail=str(e))
+
+@app.delete("/issues/{issue_id}", tags=["Görevler (Issues)"])
+def delete_issue(issue_id: str):
+    try:
+        return issue_service.delete_issue(issue_id)
+    except ValueError as e:
+        # Şef "Bulamadım" derse, kullanıcıya 404 Not Found dönüyoruz
+        raise HTTPException(status_code=404, detail=str(e))

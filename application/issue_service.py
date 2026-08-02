@@ -56,3 +56,32 @@ class IssueService:
     def delete_issue(self, issue_id: str) -> bool:
         # Servis katmanı depodaki silme işlemini tetikler ve sonucu (True/False) API'ye iletir
         return self.repository.delete(issue_id)
+
+    def update_issue(self, issue_id: str, request_data: IssueUpdateRequest) -> Issue:
+        # Pydantic'in harika özelliği: exclude_unset=True sayesinde
+        # sadece kullanıcının gönderdiği (doldurduğu) alanları sözlük olarak alırız.
+        update_data = request_data.model_dump(exclude_unset=True)
+        
+        # Eğer 'status' güncelleniyorsa, Enum'ı veritabanının anladığı düz String'e çevir
+        if "status" in update_data:
+            update_data["status"] = update_data["status"].value
+            
+        # Depoya güncellemeyi yapmasını söyle
+        updated_issue = self.repository.update(issue_id, update_data)
+        
+        # Eğer depo None döndüyse (öyle bir ID yoksa) hata fırlat
+        if not updated_issue:
+            raise ValueError(f"{issue_id} ID'li görev bulunamadı!")
+            
+        return updated_issue
+
+    def delete_issue(self, issue_id: str) -> dict:
+        # Depoya "Bu ID'yi sil" diyoruz. Başarılı olursa True, bulamazsa False dönecek.
+        is_deleted = self.repository.delete(issue_id)
+        
+        if not is_deleted:
+            # Eğer depo False dönerse, öyle bir görev yoktur. Hata fırlatıyoruz.
+            raise ValueError(f"{issue_id} ID'li görev bulunamadı veya zaten silinmiş!")
+            
+        # Başarılıysa garsona verilecek tatlı bir onay mesajı dönüyoruz
+        return {"message": "Görev başarıyla silindi."}

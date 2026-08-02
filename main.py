@@ -1,5 +1,10 @@
+from infrastructure.database import engine, Base
+from infrastructure import models
 from fastapi import FastAPI
 from api.routes import router as issues_router
+
+# Veritabanı tablolarını oluştur (Yoksa oluşturur, varsa dokunmaz)
+Base.metadata.create_all(bind=engine)
 
 # Uygulamamızın ana örneğini (instance) oluşturuyoruz.
 app = FastAPI(

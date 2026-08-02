@@ -1,4 +1,6 @@
-from domain.issue import Issue
+from domain.issue import Issue, IssueStatus
+from infrastructure.database import SessionLocal
+from infrastructure.models import IssueDBModel
 
 class IssueRepository:
     def __init__(self):
@@ -38,3 +40,71 @@ class IssueRepository:
             return True # Silme başarılı
             
         return False # Silinecek görev bulunamadı
+
+
+# YENİ SINIF BURADAN BAŞLIYOR (En sola dayalı olmalı)
+class MySQLIssueRepository:
+    
+    def _map_to_domain(self, db_item: IssueDBModel) -> Issue:
+        # Veritabanı modelini, saf Python nesnemize (Entity) çeviren yardımcı metodumuz
+        issue = Issue(
+            title=db_item.title,
+            description=db_item.description,
+            assignee_id=db_item.assignee_id,
+            due_date=db_item.due_date
+        )
+        issue.id = db_item.id
+        issue.status = IssueStatus(db_item.status)
+        issue.created_at = db_item.created_at
+        issue.updated_at = db_item.updated_at
+        return issue
+
+    def save(self, issue: Issue) -> Issue:
+        with SessionLocal() as db:
+            db_item = IssueDBModel(
+                id=issue.id,
+                title=issue.title,
+                description=issue.description,
+                status=issue.status.value,
+                assignee_id=issue.assignee_id,
+                created_at=issue.created_at,
+                updated_at=issue.updated_at,
+                due_date=issue.due_date
+            )
+            db.add(db_item)
+            db.commit() # Veritabanına kaydet (INSERT)
+        return issue
+
+    def get_all(self) -> list[Issue]:
+        with SessionLocal() as db:
+            db_items = db.query(IssueDBModel).all() # Tümünü getir (SELECT *)
+            return [self._map_to_domain(item) for item in db_items]
+
+    def get_by_id(self, issue_id: str) -> Issue | None:
+        with SessionLocal() as db:
+            db_item = db.query(IssueDBModel).filter(IssueDBModel.id == issue_id).first()
+            if db_item:
+                return self._map_to_domain(db_item)
+            return None
+
+    def update(self, issue: Issue) -> Issue:
+        with SessionLocal() as db:
+            db_item = db.query(IssueDBModel).filter(IssueDBModel.id == issue.id).first()
+            if db_item:
+                db_item.title = issue.title
+                db_item.description = issue.description
+                db_item.status = issue.status.value
+                db_item.assignee_id = issue.assignee_id
+                db_item.updated_at = issue.updated_at
+                db_item.due_date = issue.due_date
+                db.commit() # Değişiklikleri kaydet (UPDATE)
+        return issue
+
+    def delete(self, issue_id: str) -> bool:
+        with SessionLocal() as db:
+            db_item = db.query(IssueDBModel).filter(IssueDBModel.id == issue_id).first()
+            if db_item:
+                db.delete(db_item)
+                db.commit() # Veriyi sil (DELETE)
+                return True
+        return False

@@ -1,12 +1,13 @@
 from domain.issue import Issue
 from api.schemas import IssueCreateRequest, IssueUpdateRequest
 from datetime import datetime, timezone
-from infrastructure.issue_repository import IssueRepository
+# İŞTE BURAYI DÜZELTTİK: Yeni sınıfımızı (MySQLIssueRepository) da içeri aktardık.
+from infrastructure.issue_repository import IssueRepository, MySQLIssueRepository
 
 class IssueService:
     def __init__(self):
         # Mutfak şefine "Senin depon burasıdır" diyoruz.
-        self.repository = IssueRepository()
+        self.repository = MySQLIssueRepository()
 
     def create_issue(self, request_data: IssueCreateRequest) -> Issue:
         # 1. Mutfak: Entity (Varlık) Üretme

@@ -25,7 +25,7 @@ class UserResponse(BaseModel):
 class IssueCreateRequest(BaseModel):
     title: str = Field(..., min_length=3, max_length=100, description="Görevin başlığı")
     description: str = Field(..., min_length=10, description="Görevin detaylı açıklaması")
-    assignee_id: str = Field(..., description="Görevin atandığı kullanıcının ID'si")
+    # assignee_id SİLİNDİ! Artık bu bilgiyi kullanıcıdan almıyoruz, Token'dan (Arka plandan) vereceğiz.
     due_date: Optional[datetime] = Field(default=None, description="Son teslim tarihi (opsiyonel)")
 
 class IssueResponse(BaseModel):

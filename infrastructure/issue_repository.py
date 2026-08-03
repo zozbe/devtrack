@@ -60,7 +60,9 @@ class MySQLIssueRepository:
             )
             db.add(db_item)
             db.commit() 
-        return issue
+            
+        # Kayıt bittikten sonra görevi tüm ilişkileriyle (assignee dahil) tekrar çekip dönüyoruz.
+        return self.get_by_id(issue.id)
 
     def get_all(self) -> list[Issue]:
         with SessionLocal() as db:

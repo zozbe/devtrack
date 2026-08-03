@@ -14,14 +14,15 @@ class IssueService:
         new_issue = Issue(
             title=request_data.title,
             description=request_data.description,
-            assignee_id=user_id, # GÜVENLİK: API'den gelen doğrulanmış ID'yi kullanıyoruz!
+            assignee_id=user_id, 
             due_date=request_data.due_date
         )
         
-        # 2. Mutfak depoya "Bunu kaydet" der ve çekilir.
-        self.repository.save(new_issue)
+        # Deponun bize döndüğü o içi tamamen dolu (assignee bilgileri olan) görevi yakalıyoruz!
+        saved_issue = self.repository.save(new_issue)
         
-        return new_issue
+        # Ve API'ye o dolu görevi gönderiyoruz (new_issue'yu DEĞİL)
+        return saved_issue
     
     def get_all_issues(self) -> list[Issue]:
         # Servis, depo sınıfındaki get_all metodunu çağırır.

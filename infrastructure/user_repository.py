@@ -10,6 +10,7 @@ class MySQLUserRepository:
                 id=user.id,
                 username=user.username,
                 email=user.email,
+                hashed_password=user.hashed_password, # GÜVENLİK İÇİN EKLENDİ!
                 full_name=user.full_name,
                 created_at=user.created_at
             )
@@ -31,6 +32,7 @@ class MySQLUserRepository:
                 )
                 user.id = item.id
                 user.created_at = item.created_at
+                user.hashed_password = item.hashed_password # GÜVENLİK İÇİN EKLENDİ!
                 users.append(user)
                 
             return users

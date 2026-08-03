@@ -43,3 +43,28 @@ class UserService:
     
     def get_all_users(self) -> list[User]:
         return self.repository.get_all()
+
+    def authenticate_user(self, username: str, password: str) -> dict:
+        # 1. Veritabanındaki tüm kullanıcıları çekip bizimkini arıyoruz
+        users = self.repository.get_all()
+        target_user = None
+        for u in users:
+            if u.username == username:
+                target_user = u
+                break
+        
+        # Eğer kullanıcı adı yoksa hata fırlat
+        if not target_user:
+            raise ValueError("Kullanıcı adı veya şifre hatalı!")
+            
+        # 2. Şifreyi doğrula (Kripto Şefimize soruyoruz)
+        if not AuthService.verify_password(password, target_user.hashed_password):
+            raise ValueError("Kullanıcı adı veya şifre hatalı!")
+            
+        # 3. Her şey doğruysa Token (Yaka Kartı) üret
+        # Token'ın içine kullanıcının adını ve ID'sini gizliyoruz
+        token_data = {"sub": target_user.username, "id": target_user.id}
+        token = AuthService.create_access_token(token_data)
+        
+        # FastAPI'nin standart Login yanıt formatı budur:
+        return {"access_token": token, "token_type": "bearer"}

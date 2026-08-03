@@ -6,6 +6,8 @@ from application.user_service import UserService
 from application.issue_service import IssueService 
 from api.schemas import UserCreateRequest, UserResponse, IssueResponse, IssueUpdateRequest
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import Depends
 
 # Şeflerimizi başlatalım
 user_service = UserService()
@@ -67,3 +69,21 @@ def delete_issue(issue_id: str):
     except ValueError as e:
         # Şef "Bulamadım" derse, kullanıcıya 404 Not Found dönüyoruz
         raise HTTPException(status_code=404, detail=str(e))
+
+    # Login (Giriş Yap) Kapısı
+@app.post("/login", tags=["Güvenlik (Auth)"])
+def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    try:
+        # FastAPI'nin standart formu bize 'username' ve 'password' verir
+        return user_service.authenticate_user(form_data.username, form_data.password)
+    except ValueError as e:
+        # Eğer şefimiz "Hatalı" derse, kullanıcıya 401 Unauthorized (Yetkisiz) dönüyoruz
+        raise HTTPException(status_code=401, detail=str(e))
+
+@app.post("/users/", response_model=UserResponse, tags=["Kullanıcılar (Users)"])
+def create_user(request: UserCreateRequest):
+    try:
+        return user_service.create_user(request)
+    except ValueError as e:
+        # Kullanıcı zaten varsa 500 çökmesi yerine 400 hatası dönüyoruz
+        raise HTTPException(status_code=400, detail=str(e))

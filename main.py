@@ -8,6 +8,7 @@ from api.schemas import UserCreateRequest, UserResponse, IssueResponse, IssueUpd
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import Depends
+from api.dependencies import get_current_user_token
 
 # Şeflerimizi başlatalım
 user_service = UserService()
@@ -87,3 +88,11 @@ def create_user(request: UserCreateRequest):
     except ValueError as e:
         # Kullanıcı zaten varsa 500 çökmesi yerine 400 hatası dönüyoruz
         raise HTTPException(status_code=400, detail=str(e))
+
+    # SADECE YAKA KARTI OLANLARIN GİREBİLECEĞİ VIP ODA
+@app.get("/me", tags=["Güvenlik (Auth)"])
+def get_my_profile(current_user: dict = Depends(get_current_user_token)):
+    return {
+        "message": "İçeri girmeyi başardın! Güvenlik kontrolünden geçtin.",
+        "user_info": current_user
+    }

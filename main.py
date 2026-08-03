@@ -47,39 +47,9 @@ async def health_check():
         "message": "Sistem sağlıklı bir şekilde çalışıyor!"
     }
 
-@app.post("/users/", response_model=UserResponse, tags=["Kullanıcılar (Users)"])
-def create_user(request: UserCreateRequest):
-    return user_service.create_user(request)
-
 @app.get("/users/", response_model=list[UserResponse], tags=["Kullanıcılar (Users)"])
 def get_all_users():
     return user_service.get_all_users()
-
-@app.put("/issues/{issue_id}", response_model=IssueResponse, tags=["Görevler (Issues)"])
-def update_issue(issue_id: str, request: IssueUpdateRequest):
-    try:
-        return issue_service.update_issue(issue_id, request)
-    except ValueError as e:
-        # Şefimiz "Bulunamadı" diye hata fırlatırsa, Garson kullanıcıya 404 döner.
-        raise HTTPException(status_code=404, detail=str(e))
-
-@app.delete("/issues/{issue_id}", tags=["Görevler (Issues)"])
-def delete_issue(issue_id: str):
-    try:
-        return issue_service.delete_issue(issue_id)
-    except ValueError as e:
-        # Şef "Bulamadım" derse, kullanıcıya 404 Not Found dönüyoruz
-        raise HTTPException(status_code=404, detail=str(e))
-
-    # Login (Giriş Yap) Kapısı
-@app.post("/login", tags=["Güvenlik (Auth)"])
-def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    try:
-        # FastAPI'nin standart formu bize 'username' ve 'password' verir
-        return user_service.authenticate_user(form_data.username, form_data.password)
-    except ValueError as e:
-        # Eğer şefimiz "Hatalı" derse, kullanıcıya 401 Unauthorized (Yetkisiz) dönüyoruz
-        raise HTTPException(status_code=401, detail=str(e))
 
 @app.post("/users/", response_model=UserResponse, tags=["Kullanıcılar (Users)"])
 def create_user(request: UserCreateRequest):
@@ -89,7 +59,17 @@ def create_user(request: UserCreateRequest):
         # Kullanıcı zaten varsa 500 çökmesi yerine 400 hatası dönüyoruz
         raise HTTPException(status_code=400, detail=str(e))
 
-    # SADECE YAKA KARTI OLANLARIN GİREBİLECEĞİ VIP ODA
+# Login (Giriş Yap) Kapısı
+@app.post("/login", tags=["Güvenlik (Auth)"])
+def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    try:
+        # FastAPI'nin standart formu bize 'username' ve 'password' verir
+        return user_service.authenticate_user(form_data.username, form_data.password)
+    except ValueError as e:
+        # Eğer şefimiz "Hatalı" derse, kullanıcıya 401 Unauthorized (Yetkisiz) dönüyoruz
+        raise HTTPException(status_code=401, detail=str(e))
+
+# SADECE YAKA KARTI OLANLARIN GİREBİLECEĞİ VIP ODA
 @app.get("/me", tags=["Güvenlik (Auth)"])
 def get_my_profile(current_user: dict = Depends(get_current_user_token)):
     return {

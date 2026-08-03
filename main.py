@@ -3,10 +3,9 @@ from infrastructure import models
 from fastapi import FastAPI, HTTPException
 from api.routes import router as issues_router
 from application.user_service import UserService
-
-# 1. EKSİK İÇE AKTARMALAR (IMPORTS) EKLENDİ
 from application.issue_service import IssueService 
 from api.schemas import UserCreateRequest, UserResponse, IssueResponse, IssueUpdateRequest
+from fastapi.middleware.cors import CORSMiddleware
 
 # Şeflerimizi başlatalım
 user_service = UserService()
@@ -26,6 +25,15 @@ app = FastAPI(
 )
 
 app.include_router(issues_router)
+
+# CORS Ayarları (React gibi dış uygulamaların API'ye erişmesine izin verir)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Geliştirme aşamasında tüm kaynaklara izin veriyoruz (*). Canlıda burası sınırlandırılır.
+    allow_credentials=True,
+    allow_methods=["*"],  # GET, POST, PUT, DELETE vb. tüm HTTP metodlarına izin ver.
+    allow_headers=["*"],  # Tüm isteklere (özellikle ileride ekleyeceğimiz Token başlıklarına) izin ver.
+)
 
 # /health endpoint'i: Sistemin ayakta olup olmadığını kontrol eder.
 @app.get("/health")

@@ -154,3 +154,35 @@ class MySQLIssueRepository:
                 db.commit() 
                 return True
         return False
+
+    def get_issues_by_assignee(self, user_id: str) -> list[Issue]:
+        with SessionLocal() as db:
+            # .filter(IssueDBModel.assignee_id == user_id)
+            db_items = db.query(IssueDBModel).options(joinedload(IssueDBModel.assignee)).filter(IssueDBModel.assignee_id == user_id).all()
+            
+            issues = []
+            for item in db_items:
+                issue = Issue(
+                    title=item.title,
+                    description=item.description,
+                    assignee_id=item.assignee_id
+                )
+                issue.id = item.id
+                issue.status = IssueStatus(item.status)
+                issue.created_at = item.created_at
+                issue.updated_at = item.updated_at
+                issue.due_date = item.due_date
+                
+                if item.assignee:
+                    user = User(
+                        username=item.assignee.username,
+                        email=item.assignee.email,
+                        full_name=item.assignee.full_name
+                    )
+                    user.id = item.assignee.id
+                    user.created_at = item.assignee.created_at
+                    issue.assignee = user
+                    
+                issues.append(issue)
+                
+            return issues

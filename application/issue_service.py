@@ -50,3 +50,7 @@ class IssueService:
     def delete_issue(self, issue_id: str) -> bool:
         # Depoya "Bu ID'yi sil" diyoruz. Başarılı olursa True, bulamazsa False dönecek.
         return self.repository.delete(issue_id)
+
+    def get_my_issues(self, user_id: str) -> list[Issue]:
+        # Servis katmanı, yaka kartından okunan ID'yi depoya iletir ve sadece o kişinin görevlerini ister.
+        return self.repository.get_issues_by_assignee(user_id)

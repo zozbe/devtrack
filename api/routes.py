@@ -22,6 +22,15 @@ async def get_all_issues(current_user: dict = Depends(get_current_user_token)):
     issues = issue_service.get_all_issues()
     return issues
 
+@router.get("/me", response_model=list[IssueResponse])
+async def get_my_issues(current_user: dict = Depends(get_current_user_token)):
+    # 1. Yaka kartından kullanıcının ID'sini okuyoruz
+    user_id = current_user.get("id")
+    
+    # 2. Şefe sadece bu ID'ye ait görevleri getirmesini söylüyoruz
+    my_issues = issue_service.get_my_issues(user_id)
+    return my_issues
+
 @router.get("/{issue_id}", response_model=IssueResponse)
 async def get_issue(issue_id: str, current_user: dict = Depends(get_current_user_token)):
     issue = issue_service.get_issue_by_id(issue_id)

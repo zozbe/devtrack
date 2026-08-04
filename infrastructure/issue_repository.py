@@ -4,46 +4,8 @@ from infrastructure.models import IssueDBModel
 from sqlalchemy.orm import joinedload
 from domain.user import User
 from domain.repositories import AbstractIssueRepository
-
-class IssueRepository:
-    def __init__(self):
-        # Mutfaktaki geçici veritabanımızı (listemizi) gerçek yerine, yani depoya aldık.
-        self.fake_database = []
-
-    def save(self, issue: Issue) -> Issue:
-        # Gelen Görev (Issue) nesnesini veritabanına kaydeder.
-        self.fake_database.append(issue)
-        return issue
-    
-    def get_all(self) -> list[Issue]:
-        # Depodaki (listemizdeki) tüm görevleri geri döndürür.
-        return self.fake_database
-
-    def get_by_id(self, issue_id: str) -> Issue | None:
-        # Veritabanındaki tüm görevleri tek tek dolaşıyoruz
-        for issue in self.fake_database:
-            if issue.id == issue_id:
-                return issue  # Eşleşme bulunursa görevi döndür
-        
-        return None  # Döngü biter ve eşleşme bulunamazsa None döndür
-
-    def update(self, issue: Issue) -> Issue:
-        # Gerçek bir veritabanında (MySQL vb.) burada "UPDATE issues SET..." sorgusu çalışır.
-        # Şu an RAM'de (listede) çalıştığımız için nesnenin özellikleri güncellendiğinde liste de güncellenmiş oluyor.
-        # Ancak mimariyi bozmamak ve Mutfak şefinin depoya emir verebilmesi için bu metodu yazıyoruz.
-        return issue
-
-    def delete(self, issue_id: str) -> bool:
-        # 1. Önce sileceğimiz görevi buluyoruz
-        issue = self.get_by_id(issue_id)
-        
-        # 2. Eğer görev varsa, listeden (veritabanından) siliyoruz
-        if issue:
-            self.fake_database.remove(issue)
-            return True # Silme başarılı
-            
-        return False # Silinecek görev bulunamadı
-
+from datetime import datetime, timezone
+from sqlalchemy import or_
 
 class MySQLIssueRepository(AbstractIssueRepository):
     
@@ -65,10 +27,26 @@ class MySQLIssueRepository(AbstractIssueRepository):
         # Kayıt bittikten sonra görevi tüm ilişkileriyle (assignee dahil) tekrar çekip dönüyoruz.
         return self.get_by_id(issue.id)
 
-    def get_all(self) -> list[Issue]:
+    # GÜNCELLEME: search_query parametresi eklendi
+    def get_all(self, skip: int = 0, limit: int = 100, status: str | None = None, search_query: str | None = None) -> list[Issue]:
         with SessionLocal() as db:
-            # joinedload ile görevleri çekerken, sahiplerini de getiriyoruz
-            db_items = db.query(IssueDBModel).options(joinedload(IssueDBModel.assignee)).all()
+            query = db.query(IssueDBModel).options(joinedload(IssueDBModel.assignee))
+            
+            # Filtreleme mantığı: Kullanıcı statü gönderdiyse sorguya ekle
+            if status:
+                query = query.filter(IssueDBModel.status == status)
+
+            # Arama mantığı: Kullanıcı kelime gönderdiyse sorguya ekle (if status ile aynı hizada!)
+            if search_query:
+                search_term = f"%{search_query}%"
+                query = query.filter(
+                    or_(
+                        IssueDBModel.title.ilike(search_term),
+                        IssueDBModel.description.ilike(search_term)
+                    )
+                )
+                
+            db_items = query.offset(skip).limit(limit).all()
             
             issues = []
             for item in db_items:
@@ -99,7 +77,6 @@ class MySQLIssueRepository(AbstractIssueRepository):
 
     def get_by_id(self, issue_id: str) -> Issue | None:
         with SessionLocal() as db:
-            # Görevi ve atanmış kişiyi birlikte çekiyoruz
             item = db.query(IssueDBModel).options(joinedload(IssueDBModel.assignee)).filter(IssueDBModel.id == issue_id).first()
             
             if not item:
@@ -129,22 +106,18 @@ class MySQLIssueRepository(AbstractIssueRepository):
             return issue
 
     def update(self, issue_id: str, update_data: dict) -> Issue | None:
-        from datetime import datetime, timezone
         with SessionLocal() as db:
             db_item = db.query(IssueDBModel).filter(IssueDBModel.id == issue_id).first()
             
             if not db_item:
                 return None
                 
-            # Sadece kullanıcının değiştirmek istediği alanları güncelle
             for key, value in update_data.items():
                 setattr(db_item, key, value)
                 
-            # Güncellenme zamanını damgala
             db_item.updated_at = datetime.now(timezone.utc)
             db.commit()
             
-        # İşlem bitince güncel görevi tüm detaylarıyla geri döndür
         return self.get_by_id(issue_id)
 
     def delete(self, issue_id: str) -> bool:
@@ -156,10 +129,26 @@ class MySQLIssueRepository(AbstractIssueRepository):
                 return True
         return False
 
-    def get_issues_by_assignee(self, user_id: str) -> list[Issue]:
+    # GÜNCELLEME: search_query parametresi eklendi
+    def get_issues_by_assignee(self, user_id: str, skip: int = 0, limit: int = 100, status: str | None = None, search_query: str | None = None) -> list[Issue]:
         with SessionLocal() as db:
-            # .filter(IssueDBModel.assignee_id == user_id)
-            db_items = db.query(IssueDBModel).options(joinedload(IssueDBModel.assignee)).filter(IssueDBModel.assignee_id == user_id).all()
+            query = db.query(IssueDBModel).options(joinedload(IssueDBModel.assignee)).filter(IssueDBModel.assignee_id == user_id)
+            
+            # Filtreleme mantığı
+            if status:
+                query = query.filter(IssueDBModel.status == status)
+                
+            # Arama mantığı
+            if search_query:
+                search_term = f"%{search_query}%"
+                query = query.filter(
+                    or_(
+                        IssueDBModel.title.ilike(search_term),
+                        IssueDBModel.description.ilike(search_term)
+                    )
+                )
+                
+            db_items = query.offset(skip).limit(limit).all()
             
             issues = []
             for item in db_items:
@@ -187,5 +176,3 @@ class MySQLIssueRepository(AbstractIssueRepository):
                 issues.append(issue)
                 
             return issues
-        
-        

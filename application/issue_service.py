@@ -1,7 +1,6 @@
 from domain.issue import Issue
 from api.schemas import IssueCreateRequest, IssueUpdateRequest
 from datetime import datetime, timezone
-from infrastructure.issue_repository import IssueRepository, MySQLIssueRepository
 from domain.repositories import AbstractIssueRepository
 
 class IssueService:
@@ -24,10 +23,9 @@ class IssueService:
         # Ve API'ye o dolu görevi gönderiyoruz (new_issue'yu DEĞİL)
         return saved_issue
     
-    def get_all_issues(self) -> list[Issue]:
-        # Servis, depo sınıfındaki get_all metodunu çağırır.
-        return self.repository.get_all()
-
+    def get_all_issues(self, skip: int = 0, limit: int = 100, status: str | None = None, search_query: str | None = None) -> list[Issue]:
+        return self.repository.get_all(skip=skip, limit=limit, status=status, search_query=search_query)
+    
     def get_issue_by_id(self, issue_id: str) -> Issue | None:
         # Servis sadece depodan veriyi ister
         return self.repository.get_by_id(issue_id)
@@ -51,6 +49,5 @@ class IssueService:
         # Depoya "Bu ID'yi sil" diyoruz. Başarılı olursa True, bulamazsa False dönecek.
         return self.repository.delete(issue_id)
 
-    def get_my_issues(self, user_id: str) -> list[Issue]:
-        # Servis katmanı, yaka kartından okunan ID'yi depoya iletir ve sadece o kişinin görevlerini ister.
-        return self.repository.get_issues_by_assignee(user_id)
+    def get_my_issues(self, user_id: str, skip: int = 0, limit: int = 100, status: str | None = None, search_query: str | None = None) -> list[Issue]:
+        return self.repository.get_issues_by_assignee(user_id, skip=skip, limit=limit, status=status, search_query=search_query)

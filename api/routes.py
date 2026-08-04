@@ -22,22 +22,27 @@ async def create_issue(
 
 @router.get("/", response_model=list[IssueResponse])
 async def get_all_issues(
+    skip: int = 0, 
+    limit: int = 100, 
+    status: str | None = None,
+    search: str | None = None, # YENİ PARAMETRE
     current_user: dict = Depends(get_current_user_token),
     issue_service: IssueService = Depends(get_issue_service)
 ):
-    issues = issue_service.get_all_issues()
+    issues = issue_service.get_all_issues(skip=skip, limit=limit, status=status, search_query=search)
     return issues
 
 @router.get("/me", response_model=list[IssueResponse])
 async def get_my_issues(
+    skip: int = 0, 
+    limit: int = 100,
+    status: str | None = None,
+    search: str | None = None, # YENİ PARAMETRE
     current_user: dict = Depends(get_current_user_token),
     issue_service: IssueService = Depends(get_issue_service)
 ):
-    # 1. Yaka kartından kullanıcının ID'sini okuyoruz
     user_id = current_user.get("id")
-    
-    # 2. Şefe sadece bu ID'ye ait görevleri getirmesini söylüyoruz
-    my_issues = issue_service.get_my_issues(user_id)
+    my_issues = issue_service.get_my_issues(user_id, skip=skip, limit=limit, status=status, search_query=search)
     return my_issues
 
 @router.get("/{issue_id}", response_model=IssueResponse)

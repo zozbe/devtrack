@@ -11,8 +11,9 @@ class AbstractIssueRepository(ABC):
     def save(self, issue: Issue) -> Issue:
         pass
 
+    # GÜNCELLEME: search_query eklendi
     @abstractmethod
-    def get_all(self) -> list[Issue]:
+    def get_all(self, skip: int = 0, limit: int = 100, status: str | None = None, search_query: str | None = None) -> list[Issue]:
         pass
 
     @abstractmethod
@@ -27,6 +28,7 @@ class AbstractIssueRepository(ABC):
     def delete(self, issue_id: str) -> bool:
         pass
 
+    # GÜNCELLEME: search_query eklendi
     @abstractmethod
-    def get_issues_by_assignee(self, user_id: str) -> list[Issue]:
+    def get_issues_by_assignee(self, user_id: str, skip: int = 0, limit: int = 100, status: str | None = None, search_query: str | None = None) -> list[Issue]:
         pass

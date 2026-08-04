@@ -2,11 +2,11 @@ from domain.issue import Issue
 from api.schemas import IssueCreateRequest, IssueUpdateRequest
 from datetime import datetime, timezone
 from infrastructure.issue_repository import IssueRepository, MySQLIssueRepository
+from domain.repositories import AbstractIssueRepository
 
 class IssueService:
-    def __init__(self):
-        # Mutfak şefine "Senin depon burasıdır" diyoruz.
-        self.repository = MySQLIssueRepository()
+    def __init__(self, repository: AbstractIssueRepository):
+        self.repository = repository
 
     # GÜVENLİK GÜNCELLEMESİ: Artık parametre olarak 'user_id' de alıyor!
     def create_issue(self, request_data: IssueCreateRequest, user_id: str) -> Issue:

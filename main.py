@@ -3,19 +3,20 @@ from infrastructure import models
 from fastapi import FastAPI, HTTPException
 from api.routes import router as issues_router
 from application.user_service import UserService
-from application.issue_service import IssueService 
 from api.schemas import UserCreateRequest, UserResponse, IssueResponse, IssueUpdateRequest
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import Depends
 from api.dependencies import get_current_user_token
+from fastapi import Request
+from fastapi.responses import JSONResponse
+from domain.exceptions import IssueNotFoundException
 
 # Şeflerimizi başlatalım
 user_service = UserService()
-# 2. GÖREV ŞEFİMİZ (ISSUE SERVICE) EKLENDİ
-issue_service = IssueService() 
 
-# Eski yapıyı komple sil
+
+
 #Base.metadata.drop_all(bind=engine)
 # Yeni ilişkisel (Foreign Key'li) yapıyı sıfırdan kur
 Base.metadata.create_all(bind=engine)
@@ -26,6 +27,18 @@ app = FastAPI(
     description="Geliştirici Görev ve Hata Takip Sistemi",
     version="1.0.0"
 )
+
+@app.exception_handler(IssueNotFoundException)
+async def issue_not_found_exception_handler(request: Request, exc: IssueNotFoundException):
+    # Bu fonksiyon, içeride IssueNotFoundException fırlatıldığında otomatik devreye girer
+    return JSONResponse(
+        status_code=404,
+        content={
+            "error_type": "IssueNotFound",
+            "message": exc.message,
+            "requested_path": request.url.path
+        }
+    )
 
 app.include_router(issues_router)
 

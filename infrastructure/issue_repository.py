@@ -3,6 +3,7 @@ from infrastructure.database import SessionLocal
 from infrastructure.models import IssueDBModel
 from sqlalchemy.orm import joinedload
 from domain.user import User
+from domain.repositories import AbstractIssueRepository
 
 class IssueRepository:
     def __init__(self):
@@ -44,7 +45,7 @@ class IssueRepository:
         return False # Silinecek görev bulunamadı
 
 
-class MySQLIssueRepository:
+class MySQLIssueRepository(AbstractIssueRepository):
     
     def save(self, issue: Issue) -> Issue:
         with SessionLocal() as db:
@@ -186,3 +187,5 @@ class MySQLIssueRepository:
                 issues.append(issue)
                 
             return issues
+        
+        

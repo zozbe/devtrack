@@ -174,3 +174,6 @@ Bu proje kapsamında aşağıdaki yazılım mimarisi kavramları uygulanmıştı
 **Berfin Zozan İnanç**
 
 Bilgisayar Mühendisi • Backend Geliştirme • Yazılım Mimarileri • FastAPI
+
+Geliştirici Günlüğü
+Bu projenin adım adım yapım aşamalarını ve mimari kararlarını Medium üzerinden paylaşıyorum.

@@ -23,8 +23,9 @@ class IssueService:
         # Ve API'ye o dolu görevi gönderiyoruz (new_issue'yu DEĞİL)
         return saved_issue
     
-    def get_all_issues(self, skip: int = 0, limit: int = 100, status: str | None = None, search_query: str | None = None) -> list[Issue]:
-        return self.repository.get_all(skip=skip, limit=limit, status=status, search_query=search_query)
+    # GÜNCELLEME: sort_by ve sort_order eklendi
+    def get_all_issues(self, skip: int = 0, limit: int = 100, status: str | None = None, search_query: str | None = None, sort_by: str = "created_at", sort_order: str = "desc") -> list[Issue]:
+        return self.repository.get_all(skip=skip, limit=limit, status=status, search_query=search_query, sort_by=sort_by, sort_order=sort_order)
     
     def get_issue_by_id(self, issue_id: str) -> Issue | None:
         # Servis sadece depodan veriyi ister
@@ -49,5 +50,6 @@ class IssueService:
         # Depoya "Bu ID'yi sil" diyoruz. Başarılı olursa True, bulamazsa False dönecek.
         return self.repository.delete(issue_id)
 
-    def get_my_issues(self, user_id: str, skip: int = 0, limit: int = 100, status: str | None = None, search_query: str | None = None) -> list[Issue]:
-        return self.repository.get_issues_by_assignee(user_id, skip=skip, limit=limit, status=status, search_query=search_query)
+    # GÜNCELLEME: sort_by ve sort_order eklendi
+    def get_my_issues(self, user_id: str, skip: int = 0, limit: int = 100, status: str | None = None, search_query: str | None = None, sort_by: str = "created_at", sort_order: str = "desc") -> list[Issue]:
+        return self.repository.get_issues_by_assignee(user_id, skip=skip, limit=limit, status=status, search_query=search_query, sort_by=sort_by, sort_order=sort_order)

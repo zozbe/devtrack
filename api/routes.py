@@ -25,11 +25,15 @@ async def get_all_issues(
     skip: int = 0, 
     limit: int = 100, 
     status: str | None = None,
-    search: str | None = None, # YENİ PARAMETRE
+    search: str | None = None,
+    sort_by: str = "created_at", # YENİ PARAMETRE
+    sort_order: str = "desc",    # YENİ PARAMETRE
     current_user: dict = Depends(get_current_user_token),
     issue_service: IssueService = Depends(get_issue_service)
 ):
-    issues = issue_service.get_all_issues(skip=skip, limit=limit, status=status, search_query=search)
+    issues = issue_service.get_all_issues(
+        skip=skip, limit=limit, status=status, search_query=search, sort_by=sort_by, sort_order=sort_order
+    )
     return issues
 
 @router.get("/me", response_model=list[IssueResponse])
@@ -37,12 +41,16 @@ async def get_my_issues(
     skip: int = 0, 
     limit: int = 100,
     status: str | None = None,
-    search: str | None = None, # YENİ PARAMETRE
+    search: str | None = None,
+    sort_by: str = "created_at", # YENİ PARAMETRE
+    sort_order: str = "desc",    # YENİ PARAMETRE
     current_user: dict = Depends(get_current_user_token),
     issue_service: IssueService = Depends(get_issue_service)
 ):
     user_id = current_user.get("id")
-    my_issues = issue_service.get_my_issues(user_id, skip=skip, limit=limit, status=status, search_query=search)
+    my_issues = issue_service.get_my_issues(
+        user_id, skip=skip, limit=limit, status=status, search_query=search, sort_by=sort_by, sort_order=sort_order
+    )
     return my_issues
 
 @router.get("/{issue_id}", response_model=IssueResponse)

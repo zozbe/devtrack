@@ -5,7 +5,7 @@ from sqlalchemy.orm import joinedload
 from domain.user import User
 from domain.repositories import AbstractIssueRepository
 from datetime import datetime, timezone
-from sqlalchemy import or_
+from sqlalchemy import or_, desc, asc
 
 class MySQLIssueRepository(AbstractIssueRepository):
     
@@ -27,16 +27,16 @@ class MySQLIssueRepository(AbstractIssueRepository):
         # Kayıt bittikten sonra görevi tüm ilişkileriyle (assignee dahil) tekrar çekip dönüyoruz.
         return self.get_by_id(issue.id)
 
-    # GÜNCELLEME: search_query parametresi eklendi
-    def get_all(self, skip: int = 0, limit: int = 100, status: str | None = None, search_query: str | None = None) -> list[Issue]:
+    # GÜNCELLEME: sort_by ve sort_order parametreleri eklendi
+    def get_all(self, skip: int = 0, limit: int = 100, status: str | None = None, search_query: str | None = None, sort_by: str = "created_at", sort_order: str = "desc") -> list[Issue]:
         with SessionLocal() as db:
             query = db.query(IssueDBModel).options(joinedload(IssueDBModel.assignee))
             
-            # Filtreleme mantığı: Kullanıcı statü gönderdiyse sorguya ekle
+            # Filtreleme mantığı
             if status:
                 query = query.filter(IssueDBModel.status == status)
 
-            # Arama mantığı: Kullanıcı kelime gönderdiyse sorguya ekle (if status ile aynı hizada!)
+            # Arama mantığı
             if search_query:
                 search_term = f"%{search_query}%"
                 query = query.filter(
@@ -45,6 +45,15 @@ class MySQLIssueRepository(AbstractIssueRepository):
                         IssueDBModel.description.ilike(search_term)
                     )
                 )
+                
+            # YENİ: Sıralama (Sorting) mantığı
+            # Hangi sütuna göre sıralayacağımızı dinamik olarak alıyoruz
+            sort_column = getattr(IssueDBModel, sort_by, IssueDBModel.created_at)
+            
+            if sort_order == "desc":
+                query = query.order_by(desc(sort_column))
+            else:
+                query = query.order_by(asc(sort_column))
                 
             db_items = query.offset(skip).limit(limit).all()
             
@@ -129,8 +138,8 @@ class MySQLIssueRepository(AbstractIssueRepository):
                 return True
         return False
 
-    # GÜNCELLEME: search_query parametresi eklendi
-    def get_issues_by_assignee(self, user_id: str, skip: int = 0, limit: int = 100, status: str | None = None, search_query: str | None = None) -> list[Issue]:
+    # GÜNCELLEME: sort_by ve sort_order parametreleri eklendi
+    def get_issues_by_assignee(self, user_id: str, skip: int = 0, limit: int = 100, status: str | None = None, search_query: str | None = None, sort_by: str = "created_at", sort_order: str = "desc") -> list[Issue]:
         with SessionLocal() as db:
             query = db.query(IssueDBModel).options(joinedload(IssueDBModel.assignee)).filter(IssueDBModel.assignee_id == user_id)
             
@@ -147,6 +156,14 @@ class MySQLIssueRepository(AbstractIssueRepository):
                         IssueDBModel.description.ilike(search_term)
                     )
                 )
+
+            # YENİ: Sıralama (Sorting) mantığı
+            sort_column = getattr(IssueDBModel, sort_by, IssueDBModel.created_at)
+            
+            if sort_order == "desc":
+                query = query.order_by(desc(sort_column))
+            else:
+                query = query.order_by(asc(sort_column))
                 
             db_items = query.offset(skip).limit(limit).all()
             

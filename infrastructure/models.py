@@ -1,6 +1,7 @@
 from sqlalchemy import Column, String, Text, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from infrastructure.database import Base
+from sqlalchemy import Column, String, DateTime, ForeignKey, Boolean
 
 # YENİ EKLENEN KULLANICI TABLOSU (Şifreli Güncel Versiyon)
 class UserDBModel(Base):
@@ -35,3 +36,5 @@ class IssueDBModel(Base):
 
     # SQLAlchemy'nin bu görevi kimin aldığını (User objesi olarak) otomatik getirmesi için ilişki
     assignee = relationship("UserDBModel", back_populates="issues")
+
+    is_deleted = Column(Boolean, default=False)

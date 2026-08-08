@@ -177,3 +177,5 @@ Bilgisayar Mühendisi • Backend Geliştirme • Yazılım Mimarileri • FastA
 
 Geliştirici Günlüğü
 Bu projenin adım adım yapım aşamalarını ve mimari kararlarını Medium üzerinden paylaşıyorum.
+
+python check_logs.py

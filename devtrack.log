@@ -1,0 +1,10 @@
+2026-08-08 17:50:20,655 - INFO - Silme (Soft Delete) isteği alındı. Hedef Görev ID: e1a11c76-1627-42ae-8632-ac8e9ab6136e
+2026-08-08 17:50:20,946 - INFO - Görev başarıyla silindi (is_deleted=True). Görev ID: e1a11c76-1627-42ae-8632-ac8e9ab6136e
+2026-08-08 17:52:54,862 - INFO - Yeni görev oluşturuldu! Başlık: 'yemekte ne var' | Atanan Kişi ID: cdf944be-df73-42b9-adfa-fb1e73bf79c0
+2026-08-08 17:53:55,169 - INFO - Yeni görev oluşturuldu! Başlık: 'OAuth2 ve JWT tabanlı kimlik doğrulama entegrasyonu' | Atanan Kişi ID: cdf944be-df73-42b9-adfa-fb1e73bf79c0
+2026-08-08 17:54:03,721 - INFO - Yeni görev oluşturuldu! Başlık: 'Pagination (Sayfalama) performans sorununun (N+1 Problemi) çözülmesi' | Atanan Kişi ID: cdf944be-df73-42b9-adfa-fb1e73bf79c0
+2026-08-08 17:54:10,071 - INFO - Yeni görev oluşturuldu! Başlık: 'Repository katmanına Soft Delete (Yumuşak Silme) mimarisinin entegre edilmesi' | Atanan Kişi ID: cdf944be-df73-42b9-adfa-fb1e73bf79c0
+2026-08-08 18:03:51,853 - INFO - Yeni görev oluşturuldu! Başlık: 'yeni_gorev_olusturma' | Atanan Kişi ID: cdf944be-df73-42b9-adfa-fb1e73bf79c0
+2026-08-08 18:09:26,737 - INFO - Yeni görev oluşturuldu! Başlık: 'iki_yeni_gorev_olusturma' | Atanan Kişi ID: cdf944be-df73-42b9-adfa-fb1e73bf79c0
+2026-08-08 18:12:25,474 - INFO - Silme (Soft Delete) isteği alındı. Hedef Görev ID: 516af696-87a5-4bb6-9006-d83c1351f5a4
+2026-08-08 18:12:25,760 - INFO - Görev başarıyla silindi (is_deleted=True). Görev ID: 516af696-87a5-4bb6-9006-d83c1351f5a4

@@ -74,18 +74,28 @@ async def update_issue(
     current_user: dict = Depends(get_current_user_token),
     issue_service: IssueService = Depends(get_issue_service)
 ):
-    updated_issue = issue_service.update_issue(issue_id, request)
-    if updated_issue is None:
-        raise HTTPException(status_code=404, detail="Güncellenmek istenen görev bulunamadı.")
+    # KİM GÜNCELLİYOR? ID'sini alıyoruz
+    user_id = current_user.get("id")
+    
+    # Şefe user_id'yi de gönderiyoruz
+    updated_issue = issue_service.update_issue(issue_id, request, user_id)
+    
+    if not updated_issue:
+        raise HTTPException(status_code=404, detail="Görev bulunamadı")
     return updated_issue
 
-@router.delete("/{issue_id}")
+@router.delete("/{issue_id}", status_code=204)
 async def delete_issue(
     issue_id: str, 
     current_user: dict = Depends(get_current_user_token),
     issue_service: IssueService = Depends(get_issue_service)
 ):
-    success = issue_service.delete_issue(issue_id)
-    if not success:
-        raise HTTPException(status_code=404, detail="Silinmek istenen görev bulunamadı.")
-    return {"message": "Görev başarıyla silindi."}
+    # KİM SİLİYOR? ID'sini alıyoruz
+    user_id = current_user.get("id")
+    
+    # Şefe user_id'yi de gönderiyoruz
+    result = issue_service.delete_issue(issue_id, user_id)
+    
+    if not result:
+        raise HTTPException(status_code=404, detail="Görev bulunamadı")
+    return None

@@ -1,7 +1,6 @@
 from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Text, Boolean
 from sqlalchemy.orm import relationship
 from infrastructure.database import Base
-from sqlalchemy import Column, String, DateTime, ForeignKey, Boolean
 
 # YENİ EKLENEN KULLANICI TABLOSU (Şifreli Güncel Versiyon)
 class UserDBModel(Base):
@@ -55,3 +54,17 @@ class CommentDBModel(Base):
     # İlişkiler: Bu yorum hangi göreve ve hangi kullanıcıya ait?
     issue = relationship("IssueDBModel", back_populates="comments")
     author = relationship("UserDBModel")
+
+class AuditLogDBModel(Base):
+    __tablename__ = "audit_logs"
+
+    id = Column(String(36), primary_key=True, index=True)
+    entity_id = Column(String(36), nullable=False, index=True) # Hangi göreve işlem yapıldı? (issue_id)
+    entity_type = Column(String(50), default="ISSUE") # Şimdilik sadece görevler ama ileride "USER" da olabilir
+    action = Column(String(50), nullable=False) # CREATE, UPDATE, DELETE
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False) # İşlemi KİM yaptı?
+    changes = Column(Text, nullable=True) # Ne değişti? (Eski ve yeni değerleri JSON olarak tutabiliriz)
+    created_at = Column(DateTime)
+    
+    # İlişkiler
+    user = relationship("UserDBModel")

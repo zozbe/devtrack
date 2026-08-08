@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, DateTime, ForeignKey
+from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Text, Boolean
 from sqlalchemy.orm import relationship
 from infrastructure.database import Base
 from sqlalchemy import Column, String, DateTime, ForeignKey, Boolean
@@ -38,3 +38,20 @@ class IssueDBModel(Base):
     assignee = relationship("UserDBModel", back_populates="issues")
 
     is_deleted = Column(Boolean, default=False)
+
+    comments = relationship("CommentDBModel", back_populates="issue", cascade="all, delete-orphan")
+
+    is_deleted = Column(Boolean, default=False)
+
+class CommentDBModel(Base):
+    __tablename__ = "comments"
+
+    id = Column(String(36), primary_key=True, index=True)
+    issue_id = Column(String(36), ForeignKey("issues.id", ondelete="CASCADE"), nullable=False)
+    author_id = Column(String(36), ForeignKey("users.id"), nullable=False)
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime)
+
+    # İlişkiler: Bu yorum hangi göreve ve hangi kullanıcıya ait?
+    issue = relationship("IssueDBModel", back_populates="comments")
+    author = relationship("UserDBModel")

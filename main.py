@@ -16,7 +16,6 @@ from domain.exceptions import IssueNotFoundException
 user_service = UserService()
 
 
-
 #Base.metadata.drop_all(bind=engine)
 # Yeni ilişkisel (Foreign Key'li) yapıyı sıfırdan kur
 Base.metadata.create_all(bind=engine)

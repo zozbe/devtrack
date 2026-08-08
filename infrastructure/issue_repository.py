@@ -24,19 +24,16 @@ class MySQLIssueRepository(AbstractIssueRepository):
             db.add(db_item)
             db.commit() 
             
-        # Kayıt bittikten sonra görevi tüm ilişkileriyle (assignee dahil) tekrar çekip dönüyoruz.
         return self.get_by_id(issue.id)
 
-    # GÜNCELLEME: sort_by ve sort_order parametreleri eklendi
     def get_all(self, skip: int = 0, limit: int = 100, status: str | None = None, search_query: str | None = None, sort_by: str = "created_at", sort_order: str = "desc") -> list[Issue]:
         with SessionLocal() as db:
-            query = db.query(IssueDBModel).options(joinedload(IssueDBModel.assignee))
+            # GÜNCELLEME: Temel sorguda is_deleted == False olanları (silinMEYENLERİ) getiriyoruz!
+            query = db.query(IssueDBModel).options(joinedload(IssueDBModel.assignee)).filter(IssueDBModel.is_deleted == False)
             
-            # Filtreleme mantığı
             if status:
                 query = query.filter(IssueDBModel.status == status)
 
-            # Arama mantığı
             if search_query:
                 search_term = f"%{search_query}%"
                 query = query.filter(
@@ -46,8 +43,6 @@ class MySQLIssueRepository(AbstractIssueRepository):
                     )
                 )
                 
-            # YENİ: Sıralama (Sorting) mantığı
-            # Hangi sütuna göre sıralayacağımızı dinamik olarak alıyoruz
             sort_column = getattr(IssueDBModel, sort_by, IssueDBModel.created_at)
             
             if sort_order == "desc":
@@ -86,7 +81,11 @@ class MySQLIssueRepository(AbstractIssueRepository):
 
     def get_by_id(self, issue_id: str) -> Issue | None:
         with SessionLocal() as db:
-            item = db.query(IssueDBModel).options(joinedload(IssueDBModel.assignee)).filter(IssueDBModel.id == issue_id).first()
+            # GÜNCELLEME: Sadece silinmemiş olanı getir
+            item = db.query(IssueDBModel).options(joinedload(IssueDBModel.assignee)).filter(
+                IssueDBModel.id == issue_id,
+                IssueDBModel.is_deleted == False
+            ).first()
             
             if not item:
                 return None
@@ -116,7 +115,11 @@ class MySQLIssueRepository(AbstractIssueRepository):
 
     def update(self, issue_id: str, update_data: dict) -> Issue | None:
         with SessionLocal() as db:
-            db_item = db.query(IssueDBModel).filter(IssueDBModel.id == issue_id).first()
+            # Silinmiş bir görevi güncelleyemesin diye is_deleted == False kontrolü eklendi
+            db_item = db.query(IssueDBModel).filter(
+                IssueDBModel.id == issue_id,
+                IssueDBModel.is_deleted == False
+            ).first()
             
             if not db_item:
                 return None
@@ -133,21 +136,23 @@ class MySQLIssueRepository(AbstractIssueRepository):
         with SessionLocal() as db:
             db_item = db.query(IssueDBModel).filter(IssueDBModel.id == issue_id).first()
             if db_item:
-                db.delete(db_item)
+                # GÜNCELLEME: Hard delete (db.delete) yerine Soft delete yapıyoruz!
+                db_item.is_deleted = True
                 db.commit() 
                 return True
         return False
 
-    # GÜNCELLEME: sort_by ve sort_order parametreleri eklendi
     def get_issues_by_assignee(self, user_id: str, skip: int = 0, limit: int = 100, status: str | None = None, search_query: str | None = None, sort_by: str = "created_at", sort_order: str = "desc") -> list[Issue]:
         with SessionLocal() as db:
-            query = db.query(IssueDBModel).options(joinedload(IssueDBModel.assignee)).filter(IssueDBModel.assignee_id == user_id)
+            # GÜNCELLEME: is_deleted == False filtresi eklendi
+            query = db.query(IssueDBModel).options(joinedload(IssueDBModel.assignee)).filter(
+                IssueDBModel.assignee_id == user_id,
+                IssueDBModel.is_deleted == False
+            )
             
-            # Filtreleme mantığı
             if status:
                 query = query.filter(IssueDBModel.status == status)
                 
-            # Arama mantığı
             if search_query:
                 search_term = f"%{search_query}%"
                 query = query.filter(
@@ -157,7 +162,6 @@ class MySQLIssueRepository(AbstractIssueRepository):
                     )
                 )
 
-            # YENİ: Sıralama (Sorting) mantığı
             sort_column = getattr(IssueDBModel, sort_by, IssueDBModel.created_at)
             
             if sort_order == "desc":
